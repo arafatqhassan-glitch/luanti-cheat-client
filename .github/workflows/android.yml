@@ -1,6 +1,6 @@
-name: android
+Name: android
 
-# build on c/cpp changes or workflow changes
+# build on c/cpp changes, workflow changes, or manual trigger
 on:
   push:
     paths:
@@ -28,6 +28,7 @@ on:
       - 'po/**.po'
       - 'android/**'
       - '.github/workflows/android.yml'
+  workflow_dispatch: # <--- Added this to allow manual triggering from GitHub
 
 jobs:
   build:
@@ -74,3 +75,4 @@ jobs:
       with:
         name: Luanti-x86_64.apk
         path: android/app/build/outputs/apk/release/app-x86_64-release-unsigned.apk
+        
