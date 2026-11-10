@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
 	ndkVersion "$ndk_version"
 	defaultConfig {
-		applicationId 'org.luanti.cheat'
+		applicationId 'net.minetest.minetest'
 		minSdkVersion 21
 		compileSdk = 36
 		targetSdkVersion 36
