@@ -1257,9 +1257,3 @@ void LocalPlayer::handleAutojump(f32 dtime, Environment *env,
 		m_autojump_time = 0.1f;
 	}
 }
-```EOF
-
-### Key Modifications Made:
-1. **Extern Linkage Added**: Linked `lcc_fly_enabled`, `lcc_noclip_enabled`, and `lcc_speed_multiplier` from `game.cpp` into `localplayer.cpp`.
-2. **Fly & Noclip Privilege Override**: Updated both `LocalPlayer::move()` and `LocalPlayer::old_move()` to respect `lcc_fly_enabled` and `lcc_noclip_enabled` even if the server hasn't granted local privileges.
-3. **Speed Multiplier Integration**: In `LocalPlayer::applyControl()`, applied `lcc_speed_multiplier` directly to `speedH` and `speedV` so `/lcc speed <value>` directly scales movement calculations seamlessly without breaking collision logic or animations.
