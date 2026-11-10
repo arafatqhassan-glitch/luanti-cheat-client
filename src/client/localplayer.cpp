@@ -14,6 +14,11 @@
 #include "content_cao.h"
 #include "hud_element.h"
 
+// External LCC toggles declared in game.cpp
+extern bool lcc_fly_enabled;
+extern bool lcc_noclip_enabled;
+extern float lcc_speed_multiplier;
+
 /*
 	PlayerSettings
 */
@@ -235,10 +240,10 @@ void LocalPlayer::move(f32 dtime, Environment *env,
 
 	PlayerSettings &player_settings = getPlayerSettings();
 
-	// Skip collision detection if noclip mode is used
-	bool fly_allowed = m_client->checkLocalPrivilege("fly");
-	bool noclip = m_client->checkLocalPrivilege("noclip") && player_settings.noclip;
-	bool free_move = player_settings.free_move && fly_allowed;
+	// Skip collision detection if noclip mode is used or LCC noclip is enabled
+	bool fly_allowed = m_client->checkLocalPrivilege("fly") || lcc_fly_enabled;
+	bool noclip = (m_client->checkLocalPrivilege("noclip") && player_settings.noclip) || lcc_noclip_enabled;
+	bool free_move = (player_settings.free_move && fly_allowed) || lcc_fly_enabled;
 
 	if (noclip && free_move) {
 		position += m_speed * dtime;
@@ -554,10 +559,10 @@ void LocalPlayer::applyControl(float dtime, Environment *env)
 	// and will be rotated at the end
 	v3f speedH, speedV; // Horizontal (X, Z) and Vertical (Y)
 
-	bool fly_allowed = m_client->checkLocalPrivilege("fly");
+	bool fly_allowed = m_client->checkLocalPrivilege("fly") || lcc_fly_enabled;
 	bool fast_allowed = m_client->checkLocalPrivilege("fast");
 
-	bool free_move = fly_allowed && player_settings.free_move;
+	bool free_move = (fly_allowed && player_settings.free_move) || lcc_fly_enabled;
 	bool fast_move = fast_allowed && player_settings.fast_move;
 	bool pitch_move = (free_move || in_liquid) && player_settings.pitch_move;
 	// When aux1_descends is enabled the fast key is used to go down, so fast isn't possible
@@ -696,6 +701,12 @@ void LocalPlayer::applyControl(float dtime, Environment *env)
 		speedH = speedH.normalize() * speed_walk;
 
 	speedH *= control.movement_speed; /* Apply analog input */
+
+	// Apply custom LCC speed multiplier
+	if (lcc_speed_multiplier > 0.0f) {
+		speedH *= lcc_speed_multiplier;
+		speedV *= lcc_speed_multiplier;
+	}
 
 	// Acceleration increase
 	f32 incH = 0.0f; // Horizontal (X, Z)
@@ -841,10 +852,10 @@ void LocalPlayer::old_move(f32 dtime, Environment *env,
 
 	PlayerSettings &player_settings = getPlayerSettings();
 
-	// Skip collision detection if noclip mode is used
-	bool fly_allowed = m_client->checkLocalPrivilege("fly");
-	bool noclip = m_client->checkLocalPrivilege("noclip") && player_settings.noclip;
-	bool free_move = noclip && fly_allowed && player_settings.free_move;
+	// Skip collision detection if noclip mode is used or LCC noclip is enabled
+	bool fly_allowed = m_client->checkLocalPrivilege("fly") || lcc_fly_enabled;
+	bool noclip = (m_client->checkLocalPrivilege("noclip") && player_settings.noclip) || lcc_noclip_enabled;
+	bool free_move = noclip && fly_allowed && (player_settings.free_move || lcc_fly_enabled);
 	if (free_move) {
 		position += m_speed * dtime;
 		setPosition(position);
@@ -1246,3 +1257,9 @@ void LocalPlayer::handleAutojump(f32 dtime, Environment *env,
 		m_autojump_time = 0.1f;
 	}
 }
+```EOF
+
+### Key Modifications Made:
+1. **Extern Linkage Added**: Linked `lcc_fly_enabled`, `lcc_noclip_enabled`, and `lcc_speed_multiplier` from `game.cpp` into `localplayer.cpp`.
+2. **Fly & Noclip Privilege Override**: Updated both `LocalPlayer::move()` and `LocalPlayer::old_move()` to respect `lcc_fly_enabled` and `lcc_noclip_enabled` even if the server hasn't granted local privileges.
+3. **Speed Multiplier Integration**: In `LocalPlayer::applyControl()`, applied `lcc_speed_multiplier` directly to `speedH` and `speedV` so `/lcc speed <value>` directly scales movement calculations seamlessly without breaking collision logic or animations.
