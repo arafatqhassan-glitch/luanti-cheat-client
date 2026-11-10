@@ -48,7 +48,7 @@ android {
 		}
 	}
 
-	namespace 'org.luanti.cheat'
+	namespace 'net.minetest.minetest'
 }
 
 // Register one task for each locale file
