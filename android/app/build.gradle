@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
 	ndkVersion "$ndk_version"
 	defaultConfig {
-		applicationId 'net.minetest.minetest'
+		applicationId 'org.luanti.cheat'
 		minSdkVersion 21
 		compileSdk = 36
 		targetSdkVersion 36
@@ -48,7 +48,7 @@ android {
 		}
 	}
 
-	namespace 'net.minetest.minetest'
+	namespace 'org.luanti.cheat'
 }
 
 // Register one task for each locale file
