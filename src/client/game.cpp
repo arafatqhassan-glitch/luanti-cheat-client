@@ -6,6 +6,8 @@
 
 #include <cmath>
 #include <csignal>
+#include <sstream>
+#include <stdexcept>
 #include "client/gameui.h"
 #include "client/inputhandler.h"
 #include "client/texturepaths.h"
@@ -57,6 +59,16 @@
 #endif
 
 typedef s32 SamplerLayer_t;
+
+// Local client-side debugging controls (/lcc ...).
+bool lcc_fly_enabled = false;
+bool lcc_noclip_enabled = false;
+float lcc_speed_multiplier = 1.0f;
+
+// Preserve the player's configured gravity while local fly mode is active.
+static LocalPlayer *lcc_gravity_player = nullptr;
+static float lcc_saved_gravity = 0.0f;
+static bool lcc_gravity_saved = false;
 
 
 class GameGlobalShaderUniformSetter : public IShaderUniformSetter
@@ -1263,7 +1275,7 @@ void Game::updateDebugState()
 	}
 
 	// noclip
-	draw_control->allow_noclip = m_cache_enable_noclip && client->checkPrivilege("noclip");
+	draw_control->allow_noclip = (m_cache_enable_noclip && client->checkPrivilege("noclip")) || lcc_noclip_enabled;
 }
 
 void Game::updateProfilers(const RunStats &stats, const FpsControl &draw_times,
@@ -1630,6 +1642,41 @@ void Game::handleAndroidChatInput()
 		porting::AndroidDialogState dialogState = porting::getInputDialogState();
 		if (dialogState == porting::DIALOG_INPUTTED) {
 			std::string text = porting::getInputDialogMessage();
+
+			// Handle local debug commands here so they are never sent to the server.
+			if (str_starts_with(text, "/lcc ") || text == "/lcc") {
+				std::istringstream args(text);
+				std::string command, subcommand, value;
+				args >> command >> subcommand;
+
+				if (subcommand == "fly") {
+					lcc_fly_enabled = !lcc_fly_enabled;
+					m_game_ui->showStatusText(utf8_to_wide(
+							std::string("LCC fly ") + (lcc_fly_enabled ? "enabled" : "disabled")));
+				} else if (subcommand == "noclip") {
+					lcc_noclip_enabled = !lcc_noclip_enabled;
+					m_game_ui->showStatusText(utf8_to_wide(
+							std::string("LCC noclip ") + (lcc_noclip_enabled ? "enabled" : "disabled")));
+				} else if (subcommand == "speed" && (args >> value)) {
+					try {
+						const float multiplier = mystof(value);
+						if (!std::isfinite(multiplier) ||
+								multiplier <= 0.0f || multiplier > 20.0f)
+							throw std::out_of_range("speed multiplier");
+						lcc_speed_multiplier = multiplier;
+						m_game_ui->showStatusText(utf8_to_wide(
+								"LCC speed multiplier set to " + value + "x"));
+					} catch (const std::exception &) {
+						m_game_ui->showStatusText(utf8_to_wide(
+								"Usage: /lcc speed <value> (greater than 0 and at most 20)"));
+					}
+				} else {
+					m_game_ui->showStatusText(utf8_to_wide(
+							"Usage: /lcc fly | /lcc noclip | /lcc speed <value>"));
+				}
+				return;
+			}
+
 			client->typeChatMessage(utf8_to_wide(text));
 		}
 		if (dialogState != porting::DIALOG_SHOWN)
@@ -2134,8 +2181,24 @@ inline void Game::step(f32 dtime)
 		server->step();
 	}
 
-	if (!m_is_paused)
+	if (!m_is_paused) {
+		LocalPlayer *player = client->getEnv().getLocalPlayer();
+		if (player) {
+			if (lcc_fly_enabled) {
+				if (!lcc_gravity_saved || lcc_gravity_player != player) {
+					lcc_gravity_player = player;
+					lcc_saved_gravity = player->movement_gravity;
+					lcc_gravity_saved = true;
+				}
+				player->movement_gravity = 0.0f;
+			} else if (lcc_gravity_saved && lcc_gravity_player == player) {
+				player->movement_gravity = lcc_saved_gravity;
+				lcc_gravity_saved = false;
+				lcc_gravity_player = nullptr;
+			}
+		}
 		client->step(dtime);
+	}
 }
 
 static void pauseNodeAnimation(PausedNodesList &paused, scene::ISceneNode *node) {
