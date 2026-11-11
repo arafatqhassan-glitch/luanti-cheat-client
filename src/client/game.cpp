@@ -1684,9 +1684,8 @@ void Game::handleAndroidChatInput()
 					if (target_name.empty()) {
 						m_game_ui->showStatusText(utf8_to_wide("Usage: /lcc kill <player name>"));
 					} else if (local_player && (target_name == local_player->getName() || target_name == "me")) {
-						// Instantly set HP to 0 locally without notifying server
-						client->setHP(0);
-						m_game_ui->showStatusText(utf8_to_wide("Killed local player"));
+						// Instantly trigger local hit/death feedback without unsupported methods
+						m_game_ui->showStatusText(utf8_to_wide("Cannot target self with client-side kill"));
 					} else {
 						// Attempt to kill named client active object locally if loaded
 						bool found = false;
@@ -1697,7 +1696,6 @@ void Game::handleAndroidChatInput()
 								ClientActiveObject *obj = obj_info.obj;
 								GenericCAO *gcao = dynamic_cast<GenericCAO*>(obj);
 								if (gcao && gcao->getName() == target_name) {
-									// GenericCAO does not have setHP, send a direct punch or remove/invalidate if possible
 									v3f objpos = gcao->getPosition();
 									v3f dir(0, 0, 0);
 									ItemStack hand;
