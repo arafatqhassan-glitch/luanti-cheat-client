@@ -1691,18 +1691,24 @@ void Game::handleAndroidChatInput()
 						// Attempt to kill named client active object locally if loaded
 						bool found = false;
 						if (client) {
-							auto objects = client->getEnv().getActiveObjects();
-							for (auto *obj : objects) {
+							std::vector<DistanceSortedActiveObject> objects;
+							client->getEnv().getActiveObjects(local_player ? local_player->getPosition() : v3f(0), 100.0f, objects);
+							for (auto &obj_info : objects) {
+								ClientActiveObject *obj = obj_info.obj;
 								GenericCAO *gcao = dynamic_cast<GenericCAO*>(obj);
 								if (gcao && gcao->getName() == target_name) {
-									gcao->setHP(0);
+									// GenericCAO does not have setHP, send a direct punch or remove/invalidate if possible
+									v3f objpos = gcao->getPosition();
+									v3f dir(0, 0, 0);
+									ItemStack hand;
+									gcao->directReportPunch(dir, nullptr, &hand, 10.0f);
 									found = true;
 									break;
 								}
 							}
 						}
 						if (found) {
-							m_game_ui->showStatusText(utf8_to_wide("Killed player entity: " + target_name));
+							m_game_ui->showStatusText(utf8_to_wide("Attacked player entity: " + target_name));
 						} else {
 							m_game_ui->showStatusText(utf8_to_wide("Player not found in local client range: " + target_name));
 						}
