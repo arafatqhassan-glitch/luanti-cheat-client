@@ -1670,9 +1670,46 @@ void Game::handleAndroidChatInput()
 						m_game_ui->showStatusText(utf8_to_wide(
 								"Usage: /lcc speed <value> (greater than 0 and at most 20)"));
 					}
+				} else if (subcommand == "creative") {
+					// Client-side local creative mode toggle
+					bool creative = !g_settings->getBool("creative_mode");
+					g_settings->setBool("creative_mode", creative);
+					m_game_ui->showStatusText(utf8_to_wide(
+							std::string("LCC creative mode ") + (creative ? "enabled" : "disabled")));
+				} else if (subcommand == "kill") {
+					std::string target_name;
+					args >> target_name;
+					LocalPlayer *local_player = client ? client->getEnv().getLocalPlayer() : nullptr;
+
+					if (target_name.empty()) {
+						m_game_ui->showStatusText(utf8_to_wide("Usage: /lcc kill <player name>"));
+					} else if (local_player && (target_name == local_player->getName() || target_name == "me")) {
+						// Instantly set HP to 0 locally without notifying server
+						client->setHP(0);
+						m_game_ui->showStatusText(utf8_to_wide("Killed local player"));
+					} else {
+						// Attempt to kill named client active object locally if loaded
+						bool found = false;
+						if (client) {
+							auto objects = client->getEnv().getActiveObjects();
+							for (auto *obj : objects) {
+								GenericCAO *gcao = dynamic_cast<GenericCAO*>(obj);
+								if (gcao && gcao->getName() == target_name) {
+									gcao->setHP(0);
+									found = true;
+									break;
+								}
+							}
+						}
+						if (found) {
+							m_game_ui->showStatusText(utf8_to_wide("Killed player entity: " + target_name));
+						} else {
+							m_game_ui->showStatusText(utf8_to_wide("Player not found in local client range: " + target_name));
+						}
+					}
 				} else {
 					m_game_ui->showStatusText(utf8_to_wide(
-							"Usage: /lcc fly | /lcc noclip | /lcc speed <value>"));
+							"Usage: /lcc fly | /lcc noclip | /lcc speed <val> | /lcc creative | /lcc kill <player>"));
 				}
 				return;
 			}
