@@ -7,7 +7,7 @@
 </div>
 <br>
 
-Luanti is a free open-source voxel game engine with easy modding and game creation.
+LCC is a free open-source voxel game hacking toolkit with easy modding and game creation.
 
 Copyright (C) 2010-2026 Perttu Ahola <celeron55@gmail.com>
 and contributors (see source file comments and the version control log)
@@ -22,17 +22,7 @@ Table of Contents
 5. [Command-line Options](#command-line-options)
 6. [Compiling](#compiling)
 7. [Docker](#docker)
-8. [Version Scheme](#version-scheme)
-
-
-Further documentation
-----------------------
-- Website: https://www.luanti.org/
-- Luanti Documentation: https://docs.luanti.org/
-- Forum: https://forum.luanti.org/
-- GitHub: https://github.com/luanti-org/luanti/
-- [Developer documentation](doc/developing/)
-- [doc/](doc/) directory of source distribution
+8. [Version Scheme](#version-scheme#)
 
 Default controls
 ----------------
@@ -117,14 +107,6 @@ Configuration file
 Command-line options
 --------------------
 - Use `--help`
-
-Compiling
----------
-
-- [Compiling - common information](doc/compiling/README.md)
-- [Compiling on GNU/Linux](doc/compiling/linux.md)
-- [Compiling on Windows](doc/compiling/windows.md)
-- [Compiling on MacOS](doc/compiling/macos.md)
 
 Docker
 ------
