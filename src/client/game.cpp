@@ -64,7 +64,6 @@ typedef s32 SamplerLayer_t;
 bool lcc_fly_enabled = false;
 bool lcc_noclip_enabled = false;
 float lcc_speed_multiplier = 1.0f;
-bool lcc_killer_punch_enabled = false;
 
 // Preserve the player's configured gravity while local fly mode is active.
 static LocalPlayer *lcc_gravity_player = nullptr;
@@ -1671,20 +1670,9 @@ void Game::handleAndroidChatInput()
 						m_game_ui->showStatusText(utf8_to_wide(
 								"Usage: /lcc speed <value> (greater than 0 and at most 20)"));
 					}
-				} else if (subcommand == "killer" || subcommand == "killer_punch") {
-					std::string opt;
-					args >> opt;
-					if (subcommand == "killer" && opt != "punch") {
-						m_game_ui->showStatusText(utf8_to_wide(
-								"Usage: /lcc killer punch | /lcc fly | /lcc noclip | /lcc speed <val>"));
-						return;
-					}
-					lcc_killer_punch_enabled = !lcc_killer_punch_enabled;
-					m_game_ui->showStatusText(utf8_to_wide(
-							std::string("LCC killer punch ") + (lcc_killer_punch_enabled ? "enabled" : "disabled")));
 				} else {
 					m_game_ui->showStatusText(utf8_to_wide(
-							"Usage: /lcc fly | /lcc noclip | /lcc speed <val> | /lcc killer punch"));
+							"Usage: /lcc fly | /lcc noclip | /lcc speed <val>"));
 				}
 				return;
 			}
@@ -3330,10 +3318,8 @@ void Game::handlePointingAtObject(const PointedThing &pointed, const ItemStack &
 			v3f objpos = runData.selected_object->getPosition();
 			v3f dir = (objpos - player_position).normalize();
 
-			float time_from_last_punch = lcc_killer_punch_enabled ? 1000000.0f : runData.time_from_last_punch;
-
 			bool disable_send = runData.selected_object->directReportPunch(
-					dir, &tool_item, &hand_item, time_from_last_punch);
+					dir, &tool_item, &hand_item, runData.time_from_last_punch);
 			runData.time_from_last_punch = 0;
 
 			if (!disable_send)
