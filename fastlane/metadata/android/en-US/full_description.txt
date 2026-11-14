@@ -1,4 +1,4 @@
-Luanti is a voxel-based game platform with multiplayer capabilities.
+Luanti-Cheat-Client is a voxel-based hacking toolkit engine.
 
 The objective of the available games varies, from sandbox games where you can explore, dig and build in a very large voxel world, to arcade-style games.
 
