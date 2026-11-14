@@ -1,4 +1,17 @@
-// ... --
+// Luanti
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2010-2013 celeron55, Perttu Ahola <celeron55@gmail.com>
+
+#include "localplayer.h"
+#include <cmath>
+#include "mtevent.h"
+#include "collision.h"
+#include "nodedef.h"
+#include "settings.h"
+#include "environment.h"
+#include "map.h"
+#include "client.h"
+#include "content_cao.h"
 #include "hud_element.h"
 #include "itemdef.h"
 #include "inventory.h"
