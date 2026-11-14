@@ -22,16 +22,20 @@ extern bool lcc_noclip_enabled;
 extern float lcc_speed_multiplier;
 
 // Helper to enforce a 55 base punch damage on the hand and add +55 bonus damage to any wielded weapon/tool
-static void applyCustomPunchDamage(LocalPlayer *player)
+static void applyCustomPunchDamage(LocalPlayer *player, Client *client)
 {
-	if (!player)
+	if (!player || !client)
+		return;
+
+	IItemDefManager *idef = client->idef();
+	if (!idef)
 		return;
 
 	// 1. Boost the bare hand item stack in the player's "hand" inventory list to 55 fleshy damage
 	InventoryList *hand_list = player->inventory.getList("hand");
 	if (hand_list && hand_list->getSize() > 0) {
 		ItemStack hand_stack = hand_list->getItem(0);
-		ToolCapabilities hand_caps = hand_stack.getToolCapabilities(player->getClient()->idef());
+		ToolCapabilities hand_caps = hand_stack.getToolCapabilities(idef);
 		if (hand_caps.damageGroups["fleshy"] < 55) {
 			hand_caps.damageGroups["fleshy"] = 55;
 			hand_stack.metadata.setToolCapabilities(hand_caps);
@@ -47,9 +51,9 @@ static void applyCustomPunchDamage(LocalPlayer *player)
 		if (!wield_stack.empty()) {
 			// Check if we already applied the +55 boost to this item stack
 			if (wield_stack.metadata.getString("lcc_damage_boosted") != "1") {
-				ToolCapabilities item_caps = wield_stack.getToolCapabilities(player->getClient()->idef());
+				ToolCapabilities item_caps = wield_stack.getToolCapabilities(idef);
 				// Only boost items that deal damage or are tools/weapons
-				if (!item_caps.damageGroups.empty() || wield_stack.getDefinition(player->getClient()->idef()).type == ITEM_TOOL) {
+				if (!item_caps.damageGroups.empty() || wield_stack.getDefinition(idef).type == ITEM_TOOL) {
 					item_caps.damageGroups["fleshy"] += 55;
 					wield_stack.metadata.setToolCapabilities(item_caps);
 					wield_stack.metadata.setString("lcc_damage_boosted", "1");
@@ -110,7 +114,7 @@ LocalPlayer::LocalPlayer(Client *client, const std::string &name):
 {
 	m_player_settings.readGlobalSettings();
 	m_player_settings.registerSettingsCallback();
-	applyCustomPunchDamage(this);
+	applyCustomPunchDamage(this, m_client);
 }
 
 LocalPlayer::~LocalPlayer()
@@ -259,7 +263,7 @@ void LocalPlayer::move(f32 dtime, Environment *env,
 		std::vector<CollisionInfo> *collision_info)
 {
 	// Ensure custom 55 base punch damage & +55 weapon boost remain active across worlds and servers
-	applyCustomPunchDamage(this);
+	applyCustomPunchDamage(this, m_client);
 
 	// Node at feet position, update each ClientEnvironment::step()
 	if (!collision_info || collision_info->empty())
